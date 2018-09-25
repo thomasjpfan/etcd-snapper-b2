@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 // Uploader is an interface for uploaders
@@ -41,7 +43,27 @@ type B2GetUploadURLResponse struct {
 
 // Upload uploads data to b2
 func (b B2Uploader) Upload(ctx context.Context, path string) error {
-	return b.upload(ctx, path)
+	err := b.upload(ctx, path)
+	if err == nil {
+		return nil
+	}
+
+	log.Printf("Upload failed: %v, will retry in %d ms", err, b.UploadRetryInterval)
+	ticker := time.NewTicker(
+		time.Millisecond * time.Duration(b.UploadRetryInterval))
+
+	for {
+		select {
+		case <-ticker.C:
+			err := b.upload(ctx, path)
+			if err == nil {
+				return nil
+			}
+			log.Printf("Upload failed: %v, will retry in %d ms", err, b.UploadRetryInterval)
+		case <-ctx.Done():
+			return fmt.Errorf("Upload canceled")
+		}
+	}
 }
 
 func (b B2Uploader) upload(ctx context.Context, path string) error {

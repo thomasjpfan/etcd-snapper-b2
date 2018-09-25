@@ -163,7 +163,7 @@ func (s *SnapshotTestSuite) Test_Watch_TwoEventsOutsideOfInterval() {
 	eSnapper := EtcdSnapper{
 		Client:                             s.EClient,
 		Uploader:                           uploadMock,
-		WaitForAdditionalChangesIntervalMS: 500,
+		WaitForAdditionalChangesIntervalMS: 1,
 		SnapshotPath:                       s.SnapshotPath,
 		Prefix:                             "hello",
 	}
@@ -171,7 +171,7 @@ func (s *SnapshotTestSuite) Test_Watch_TwoEventsOutsideOfInterval() {
 	go eSnapper.Watch()
 
 	go func() {
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		_, err := s.EClient.Put(context.Background(), "hello/wow", "world")
 		if err != nil {
 			return
@@ -183,7 +183,7 @@ func (s *SnapshotTestSuite) Test_Watch_TwoEventsOutsideOfInterval() {
 		}
 	}()
 
-	timer := time.NewTimer(time.Second * 8).C
+	timer := time.NewTimer(time.Second * 5).C
 
 L:
 	for {

@@ -70,3 +70,47 @@ func (s *B2UploaderTestSuite) Test_Upload_Success() {
 	err := uploader.Upload(context.Background(), s.TestFile)
 	s.NoError(err)
 }
+
+func (s *B2UploaderTestSuite) Test_Upload_Fail() {
+
+	client := http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	uploader := B2Uploader{
+		ApplicationID:       s.AppplicationID,
+		ApplicationKey:      s.ApplicationKey,
+		BucketID:            s.BucketID,
+		Object:              s.Object,
+		UploadRetryInterval: 1000,
+		HTTPClient:          &client,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errChan := make(chan error, 1)
+	go func() {
+		err := uploader.Upload(ctx, "NOTAFILE")
+		errChan <- err
+	}()
+
+	go func() {
+		time.Sleep(time.Second)
+		cancel()
+	}()
+
+	var errUpload error
+	t := time.NewTimer(time.Second * 5).C
+L:
+	for {
+		select {
+		case <-t:
+			s.FailNow("Timeout")
+		case errUpload = <-errChan:
+			break L
+		}
+	}
+
+	s.Require().Error(errUpload)
+	s.Equal("Upload canceled", errUpload.Error())
+
+}
