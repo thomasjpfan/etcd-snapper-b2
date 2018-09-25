@@ -53,6 +53,6 @@ func main() {
 		log.Fatalf("Unable to upload initial etcd snapshot: %v", err)
 	}
 	log.Printf("Starting to watch etcd")
-	go etcdSnapper.Watch()
+	etcdSnapper.Watch()
 
 }
