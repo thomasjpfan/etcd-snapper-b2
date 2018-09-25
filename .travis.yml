@@ -1,0 +1,28 @@
+# Sudo is required for docker
+sudo: required
+
+# Enable docker
+services:
+  - docker
+
+language: go
+
+go:
+  - "1.11.x"
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+env:
+  global:
+    - DOCKERTEST_BIND_LOCALHOST=true
+
+script: >
+  make unittest && make image
+
+after_success: >
+  if [ "$TRAVIS_BRANCH" == "master" ]; then
+    bash scripts/docker_push.sh
+  fi
