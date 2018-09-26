@@ -30,8 +30,13 @@ func (e *EtcdSnapper) Watch() {
 
 	waitDuration := time.Millisecond * time.Duration(e.WaitForAdditionalChangesIntervalMS)
 
+	var t *time.Timer
+
 	for range rch {
-		time.AfterFunc(waitDuration, func() {
+		if t != nil {
+			t.Stop()
+		}
+		t = time.AfterFunc(waitDuration, func() {
 			err := e.SnapshotAndUpload()
 			if err != nil {
 				log.Printf("%v", err)
@@ -48,11 +53,11 @@ func (e *EtcdSnapper) SnapshotAndUpload() error {
 		e.Cancel()
 	}
 
-	e.SnapLock.Lock()
-	defer e.SnapLock.Unlock()
-
 	ctx, cancel := context.WithCancel(context.Background())
 	e.Cancel = cancel
+
+	e.SnapLock.Lock()
+	defer e.SnapLock.Unlock()
 
 	err := e.snapshot(ctx)
 	if err != nil {

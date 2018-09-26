@@ -176,7 +176,7 @@ func (s *SnapshotTestSuite) Test_Watch_TwoEventsOutsideOfInterval() {
 		if err != nil {
 			return
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 		_, err = s.EClient.Put(context.Background(), "hello/there", "sings")
 		if err != nil {
 			return
@@ -199,5 +199,4 @@ L:
 	_, err := os.Stat(s.SnapshotPath)
 	s.True(!os.IsNotExist(err))
 	uploadMock.AssertExpectations(s.T())
-
 }
